@@ -1,0 +1,63 @@
+# This is a reusable "called" workflow that should be called from "caller" workflows.
+
+# Description:
+# Retrieve Jira Issue Key from Pull Request Title using regexp '[A-Z]+-[0-9]+' and fails if Jira Issue key not found.
+# Request Jira for the Issue status and fails if Jira Issue Status is not "Merge".
+
+name: Reusable workflow Check Jira Issue Merge Status
+
+on:
+  workflow_call:
+    inputs:
+      jira-user:
+        type: string
+        default: ci@iyno.ru
+        
+    secrets:
+      github-token:
+        required: true
+      jira-token:
+        required: true
+        
+jobs:
+  get-status:
+    if: startsWith(github.head_ref, 'dependabot/') == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Retrieve Jira Issue key from PR title
+        id: find_key
+        shell: bash
+        run: |
+          echo "Looking for Jira Issue key in '${{ github.event.pull_request.title }}'."
+          issue=$(echo ${{ github.event.pull_request.title }} | grep -Eo '[A-Z]+-[0-9]+' | head -1 || true)
+          if [ -z $issue ]; then
+            echo "::error::Jira Issue key not found!";
+            exit 1
+          fi
+          echo "::set-output name=issue::$issue"
+          echo "::notice::Retrieved Jira Issue key: $issue"           
+      - name: Get Jira Issue Status
+        shell: bash
+        run: |
+          echo "Requesting Jira API for the Issue ${{ steps.find_key.outputs.issue }}"
+          response=$(curl -s "https://iyno-llc.atlassian.net/rest/api/3/issue/${{ steps.find_key.outputs.issue }}?fields=status" --user ${{ inputs.jira-user }}:${{ secrets.jira-token }})
+          echo "::debug::Jira API response: $response"
+          status=$(echo $response | jq '.fields.status.name' || true)
+          if [ -z $status ]; then
+            echo "::error::Jira Issue Status is empty!"
+            exit 1
+          fi
+          echo "##[set-output name=status;]$status"
+          echo "::notice::Retrieved Jira Issue Status: $status"
+        id: issue_status
+
+      - name: Check that Issue Status is Merge
+        shell: bash
+        run: |
+          echo "Check status"
+          if [[ ! ${{steps.issue_status.outputs.status}} =~ "Merge" ]]; then
+            echo "::error::Jira Issue ${{ steps.find_key.outputs.issue }} is not in Merge status! Exiting..."
+            exit 1
+          fi
+          echo "Jira Issue ${{ steps.find_key.outputs.issue }} is in Merge status - Ready to automerge"
