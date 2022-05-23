@@ -1,0 +1,15 @@
+name: Enable Pull Request Auto-merge  
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches:
+      - develop
+    
+jobs:
+  enable-automerge:
+    if: startsWith(github.head_ref, 'dependabot/') == false
+    runs-on: ubuntu-latest
+    steps:
+    - uses: alexwilson/enable-github-automerge-action@main
+      with:
+        github-token: "${{ secrets.CI_TOKEN }}"
