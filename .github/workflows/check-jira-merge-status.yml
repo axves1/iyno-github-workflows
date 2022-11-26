@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           echo "Looking for Jira Issue key in '${{ github.event.pull_request.title }}'."
-          issue=$(echo ${{ github.event.pull_request.title }} | grep -Eo '[A-Z]+-[0-9]+' | head -1 || true)
+          issue=$(echo "${{ github.event.pull_request.title }}" | grep -Eo '[A-Z]+-[0-9]+' | head -1 || true)
           if [ -z $issue ]; then
             echo "::error::Jira Issue key not found!";
             exit 1
