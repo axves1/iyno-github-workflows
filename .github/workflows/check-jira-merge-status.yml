@@ -35,9 +35,11 @@ jobs:
             echo "::error::Jira Issue key not found!";
             exit 1
           fi
-          echo "::set-output name=issue::$issue"
-          echo "::notice::Retrieved Jira Issue key: $issue"           
+          echo "issue=$issue" >> $GITHUB_OUTPUT
+          echo "::notice::Retrieved Jira Issue key: $issue"
+
       - name: Get Jira Issue Status
+        id: issue_status
         shell: bash
         run: |
           echo "Requesting Jira API for the Issue ${{ steps.find_key.outputs.issue }}"
@@ -48,9 +50,8 @@ jobs:
             echo "::error::Jira Issue Status is empty!"
             exit 1
           fi
-          echo "##[set-output name=status;]$status"
-          echo "::notice::Retrieved Jira Issue Status: $status"
-        id: issue_status
+          echo "status=$status" >> $GITHUB_OUTPUT
+          echo "::notice::Retrieved Jira Issue Status: $status"        
 
       - name: Check that Issue Status is Merge
         shell: bash
