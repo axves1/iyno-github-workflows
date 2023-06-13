@@ -22,7 +22,7 @@ on:
 jobs:
   get-status:
     if: startsWith(github.head_ref, 'dependabot/') == false
-    runs-on: [self-hosted, aws-devops-self-hosted]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Retrieve Jira Issue key from PR title
