@@ -22,7 +22,7 @@ on:
 jobs:
   get-status:
     if: startsWith(github.head_ref, 'dependabot/') == false
-    runs-on: ubuntu-latest
+    runs-on: arc-yashka
 
     steps:
       - name: Retrieve Jira Issue key from PR title
